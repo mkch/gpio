@@ -54,7 +54,7 @@ func newInputLineEvents(chipFd int, offset uint32, flags, eventFlags uint32, con
 	}
 
 	err = unix.EpollCtl(epollFd, unix.EPOLL_CTL_ADD, wakeUpEventFd, &unix.EpollEvent{
-		Events: unix.EPOLLIN | unix.EPOLLET,
+		Events: unix.EPOLLIN,
 		Fd:     int32(wakeUpEventFd),
 	})
 	if err != nil {
@@ -63,7 +63,8 @@ func newInputLineEvents(chipFd int, offset uint32, flags, eventFlags uint32, con
 	}
 
 	err = unix.EpollCtl(epollFd, unix.EPOLL_CTL_ADD, int(req.Fd), &unix.EpollEvent{
-		Events: unix.EPOLLIN | unix.EPOLLPRI | unix.EPOLLET,
+		// DO NOT use unix.EPOLLET which will cause event lost when BothEdges is set.
+		Events: unix.EPOLLIN | unix.EPOLLPRI,
 		Fd:     int32(req.Fd),
 	})
 	if err != nil {
@@ -137,11 +138,12 @@ func (l *inputLineWithEvent) waitLoop(epollFd int) {
 
 				sec := uint64(time.Nanosecond) * eventData.Timestamp / uint64(time.Second)
 				nano := uint64(time.Nanosecond) * eventData.Timestamp % uint64(time.Second)
+				event := Event{
+					RisingEdge: eventData.ID == sys.GPIOEVENT_EVENT_RISING_EDGE,
+					Time:       time.Unix(int64(sec), int64(nano)),
+				}
 				for _, recv := range eventReceivers {
-					recv <- Event{
-						RisingEdge: eventData.ID == sys.GPIOEVENT_EVENT_RISING_EDGE,
-						Time:       time.Unix(int64(sec), int64(nano)),
-					}
+					recv <- event
 				}
 			case int32(l.wakeUpEventFd):
 				var count uint64
