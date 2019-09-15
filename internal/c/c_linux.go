@@ -4,9 +4,7 @@ package c
 #include <linux/gpio.h>
 #include <string.h>
 */
-import (
-	"C"
-)
+import "C"
 
 var (
 	GPIO_GET_CHIPINFO_IOCTL          = uint32(C.GPIO_GET_CHIPINFO_IOCTL)

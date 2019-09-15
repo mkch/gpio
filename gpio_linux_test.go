@@ -2,7 +2,6 @@ package gpio_test
 
 import (
 	"flag"
-	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
@@ -63,7 +62,7 @@ func TestOpenInputLine(t1 *testing.T) {
 	t.Assert(len(consumer), Equals(31).SetFatal())
 
 	type args struct {
-		flags    gpio.InputFlag
+		flags    gpio.LineFlag
 		consumer string
 	}
 	type wantInfo struct {
@@ -79,6 +78,7 @@ func TestOpenInputLine(t1 *testing.T) {
 		testCase{
 			name: "consumer",
 			args: args{
+				flags:    gpio.Input,
 				consumer: consumer,
 			},
 			wantInfo: wantInfo{
@@ -88,8 +88,8 @@ func TestOpenInputLine(t1 *testing.T) {
 		testCase{
 			name: "active-low",
 			args: args{
+				flags:    gpio.Input | gpio.ActiveLow,
 				consumer: consumer,
-				flags:    gpio.InActiveLow,
 			},
 			wantInfo: wantInfo{
 				consumer:  consumer,
@@ -100,7 +100,7 @@ func TestOpenInputLine(t1 *testing.T) {
 	for _, tt := range tests {
 		t1.Run(tt.name, func(t1 *testing.T) {
 			t := NewTB(t1)
-			line, err := chip.OpenInputLine(uint32(inputLine), tt.args.flags, tt.args.consumer)
+			line, err := chip.OpenLine(uint32(inputLine), 0, tt.args.flags, tt.args.consumer)
 			t.Assert(ValueError(line, err), NotEquals(nil).SetFatal())
 
 			gotInfo, err := chip.LineInfo(uint32(inputLine))
@@ -125,7 +125,7 @@ func TestOpenOutputLine(t1 *testing.T) {
 	const consumer = "a"
 
 	type args struct {
-		flags    gpio.OutputFlag
+		flags    gpio.LineFlag
 		consumer string
 	}
 	type wantInfo struct {
@@ -143,6 +143,7 @@ func TestOpenOutputLine(t1 *testing.T) {
 		testCase{
 			name: "consumer",
 			args: args{
+				flags:    gpio.Output,
 				consumer: consumer,
 			},
 			wantInfo: wantInfo{
@@ -153,7 +154,7 @@ func TestOpenOutputLine(t1 *testing.T) {
 			name: "active-low",
 			args: args{
 				consumer: consumer,
-				flags:    gpio.OutActiveLow,
+				flags:    gpio.Output | gpio.ActiveLow,
 			},
 			wantInfo: wantInfo{
 				consumer:  consumer,
@@ -162,7 +163,9 @@ func TestOpenOutputLine(t1 *testing.T) {
 		},
 		testCase{
 			name: "empty-consumer",
-			args: args{},
+			args: args{
+				flags: gpio.Output,
+			},
 			wantInfo: wantInfo{
 				// The kernel return ? if the line is occupied but without a consumer abel.
 				// This behavior is not documented.
@@ -173,14 +176,13 @@ func TestOpenOutputLine(t1 *testing.T) {
 	for _, tt := range tests {
 		t1.Run(tt.name, func(t1 *testing.T) {
 			t := NewTB(t1)
-			line, err := chip.OpenOutputLine(uint32(inputLine), 0, tt.args.flags, tt.args.consumer)
+			line, err := chip.OpenLine(uint32(inputLine), 0, tt.args.flags, tt.args.consumer)
 			t.Assert(ValueError(line, err), NotEquals(nil).SetFatal())
 			t.AssertNoError(line.SetValue(1))
 
 			gotInfo, err := chip.LineInfo(uint32(inputLine))
 			t.AssertNoError(err)
 			t.AssertEqual(gotInfo.Output(), true)
-			fmt.Printf("got=%#v want=%#v\n", gotInfo.Consumer, tt.wantInfo.consumer)
 			t.AssertEqual(gotInfo.Consumer, tt.wantInfo.consumer)
 			t.AssertEqual(gotInfo.ActiveLow(), tt.wantInfo.activeLow)
 			t.AssertEqual(gotInfo.OpenDrain(), tt.wantInfo.openDrain)

@@ -17,10 +17,10 @@ func main() {
 	chip := mustChip(gpio.OpenChip(devices[0]))
 	defer chip.Close()
 
-	led := mustO(chip.OpenOutputLine(3, 0, 0, "led"))
+	led := mustLine(chip.OpenLine(3, 0, gpio.Output, "led"))
 	defer led.Close()
 
-	btn := mustI(chip.OpenInputLineWithEvent(2, 0, gpio.BothEdges, "btn"))
+	btn := mustLineEvt(chip.OpenLineWithEvent(2, gpio.Input, gpio.BothEdges, "btn"))
 	defer btn.Close()
 
 	btnEvent, err := btn.Subscribe(context.TODO())
@@ -68,14 +68,14 @@ func mustChip(chip *gpio.Chip, err error) *gpio.Chip {
 	return chip
 }
 
-func mustO(line gpio.OutputLine, err error) gpio.OutputLine {
+func mustLine(line *gpio.Line, err error) *gpio.Line {
 	if err != nil {
 		log.Panic(err)
 	}
 	return line
 }
 
-func mustI(line gpio.InputLineWithEvent, err error) gpio.InputLineWithEvent {
+func mustLineEvt(line *gpio.LineWithEvent, err error) *gpio.LineWithEvent {
 	if err != nil {
 		log.Panic(err)
 	}

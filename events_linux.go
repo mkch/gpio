@@ -12,24 +12,25 @@ import (
 	"golang.org/x/sys/unix"
 )
 
-type inputLineWithEvent struct {
-	lines
+// LineWithEvent is an opened GPIO line whose events can be subscribed.
+type LineWithEvent struct {
+	l Line
 
 	wakeUpEventFd     int
 	wakeUpDataChannel chan *wakeUpData
 	closed            chan struct{}
 }
 
-func (l *inputLineWithEvent) Close() (err error) {
-	err = l.lines.Close()
-	if err != nil {
-		return
-	}
-	close(l.closed)
-	return
+func (l *LineWithEvent) Close() (err error) {
+	return l.l.Close()
 }
 
-func newInputLineEvents(chipFd int, offset uint32, flags, eventFlags uint32, consumer string) (line *inputLineWithEvent, err error) {
+// Value returns the current value of the GPIO line. 1 (high) or 0 (low).
+func (l *LineWithEvent) Value() (value byte, err error) {
+	return l.l.Value()
+}
+
+func newInputLineEvents(chipFd int, offset uint32, flags, eventFlags uint32, consumer string) (line *LineWithEvent, err error) {
 	var req = sys.GPIOEventRequest{
 		LineOffset:  offset,
 		HandleFlags: uint32(flags),
@@ -72,8 +73,8 @@ func newInputLineEvents(chipFd int, offset uint32, flags, eventFlags uint32, con
 		return
 	}
 
-	line = &inputLineWithEvent{
-		lines:             lines{fd: int(req.Fd), numLines: 1},
+	line = &LineWithEvent{
+		l:                 Line{fd: int(req.Fd), numLines: 1},
 		wakeUpEventFd:     wakeUpEventFd,
 		wakeUpDataChannel: make(chan *wakeUpData),
 		closed:            make(chan struct{}),
@@ -94,7 +95,7 @@ type wakeUpData struct {
 	EventReceiver chan Event
 }
 
-func (l *inputLineWithEvent) waitLoop(epollFd int) {
+func (l *LineWithEvent) waitLoop(epollFd int) {
 	var eventReceivers []chan Event
 
 	defer func() {
@@ -122,10 +123,10 @@ func (l *inputLineWithEvent) waitLoop(epollFd int) {
 		}
 		for i := 0; i < n; i++ {
 			switch waitEvent[i].Fd {
-			case int32(l.fd):
+			case int32(l.l.fd):
 				// Interrupt caused by GPIO event.
 				var eventData sys.GPIOEventData
-				n, err := unix.Read(l.fd, (*[unsafe.Sizeof(eventData)]byte)(unsafe.Pointer(&eventData))[:])
+				n, err := unix.Read(l.l.fd, (*[unsafe.Sizeof(eventData)]byte)(unsafe.Pointer(&eventData))[:])
 				if err != nil {
 					if err == syscall.EINTR {
 						continue
@@ -179,7 +180,7 @@ func (l *inputLineWithEvent) waitLoop(epollFd int) {
 	}
 }
 
-func (l *inputLineWithEvent) wakeUpEpollWaitLoop(data *wakeUpData) (err error) {
+func (l *LineWithEvent) wakeUpEpollWaitLoop(data *wakeUpData) (err error) {
 	// Wakeup epoll_wait loop adding 1 to the event counter.
 	var one = uint64(1)
 	n, err := unix.Write(l.wakeUpEventFd, (*[unsafe.Sizeof(one)]byte)(unsafe.Pointer(&one))[:])
@@ -194,7 +195,13 @@ func (l *inputLineWithEvent) wakeUpEpollWaitLoop(data *wakeUpData) (err error) {
 	return
 }
 
-func (l *inputLineWithEvent) Subscribe(context context.Context) (events <-chan Event, err error) {
+// Subscribe subscribes to the GPIO events of this GPIO line.
+// It returns an event channel where events can be read and any error encountered.
+// Upcoming GPIO events(value changed form 1 to 0, aka falling edge for example) will
+// be sent to the returned event channel, and the channel will be closed when the line
+// is closed. Cancelling the context parameter stops any further event delivery to the
+// channel but does not close it.
+func (l *LineWithEvent) Subscribe(context context.Context) (events <-chan Event, err error) {
 	receiver := make(chan Event, 32)
 	events = receiver
 

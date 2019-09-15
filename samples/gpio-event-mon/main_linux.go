@@ -29,7 +29,7 @@ gpio-event-mon -n gpiochip0 -o 4 -r -f`)
 	loops := flag.Uint("c", 0, "Do <`n`> loops (optional, infinite loop if not stated)")
 	flag.Parse()
 
-	var handleFlags gpio.LineFlag
+	var handleFlags = gpio.Input
 	var eventFlags gpio.EventFlag
 
 	if *openDrain {
@@ -73,7 +73,7 @@ func monitorDevice(deviceName string, lineOffset int, handleFlags gpio.LineFlag,
 	}
 	defer chip.Close()
 
-	line, err := chip.OpenInputLineWithEvent(uint32(lineOffset), handleFlags, eventFlags, "gpio-event-mon")
+	line, err := chip.OpenLineWithEvent(uint32(lineOffset), handleFlags, eventFlags, "gpio-event-mon")
 	if err != nil {
 		return
 	}

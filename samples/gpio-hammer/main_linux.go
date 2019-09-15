@@ -52,7 +52,7 @@ func hammerDevice(deviceName string, offsets []uint32, loops uint) (err error) {
 	}
 
 	var values = make([]byte, len(offsets))
-	lines, err := chip.OpenOutputLines(offsets, values, 0, "gpio-hammer")
+	lines, err := chip.OpenLines(offsets, values, gpio.Output, "gpio-hammer")
 	if err != nil {
 		return
 	}
