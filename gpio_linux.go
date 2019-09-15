@@ -146,7 +146,7 @@ const (
 // the missing values will be 0.
 // Parameter flags is or'ed OutputFlag values that will be applied to all quested lines.
 // Parameter consumer is a desired consumer label for the selected GPIO line(s) such as "my-bitbanged-relay".
-func (c *Chip) OpenOutputLines(offsets []uint32, defaultValues []byte, flags LineFlag, consumer string) (InputLines, error) {
+func (c *Chip) OpenOutputLines(offsets []uint32, defaultValues []byte, flags LineFlag, consumer string) (OutputLines, error) {
 	return c.requestLines(offsets, defaultValues, uint32(flags)|sys.GPIOHANDLE_REQUEST_OUTPUT, consumer)
 }
 

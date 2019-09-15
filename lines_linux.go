@@ -27,7 +27,7 @@ type OutputLines interface {
 	// Value should be 0 (low) or 1 (high), anything else than 0 will be interpreted as 1 (high).
 	// If there are more values than requested lines, the extra values will be discarded. If there are less values,
 	// the missing values will be 0.
-	SetValue(value byte) (err error)
+	SetValues(value []byte) (err error)
 }
 
 // InputLine is an opened GPIO line used as input.
