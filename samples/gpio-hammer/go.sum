@@ -1,0 +1,3 @@
+github.com/mkch/asserting v0.0.0-20190913074031-29e0011a678c/go.mod h1:7QF1TGIJmEibF74aU9YWLLfDOnl4R94hWzpD/zWowbM=
+golang.org/x/sys v0.0.0-20190912141932-bc967efca4b8 h1:41hwlulw1prEMBxLQSlMSux1zxJf07B3WPsdjJlKZxE=
+golang.org/x/sys v0.0.0-20190912141932-bc967efca4b8/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
