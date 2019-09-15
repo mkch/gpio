@@ -122,11 +122,11 @@ func (c *Chip) requestLines(offsets []uint32, outputDefaultValues []byte, reques
 	return
 }
 
-type OutputFlag uint32
+type LineFlag uint32
 
 const (
-	// OutActiveLow inverts the value for writing.
-	OutActiveLow OutputFlag = OutputFlag(sys.GPIOHANDLE_REQUEST_ACTIVE_LOW)
+	// ActiveLow inverts the value for writing.
+	ActiveLow LineFlag = LineFlag(sys.GPIOHANDLE_REQUEST_ACTIVE_LOW)
 	// OpenDrain
 	//
 	// https://embeddedartistry.com/blog/2018/6/4/demystifying-microcontroller-gpio-settings#open-drain-output=
@@ -134,15 +134,8 @@ const (
 	// In order to achieve a logical high output on the line, a pull-up resistor is used to connect the open-drain output
 	// to the desired output voltage level.
 	// You can think of an open-drain GPIO as behaving like a switch which is either connected to ground or disconnected."
-	OpenDrain  = OutputFlag(sys.GPIOHANDLE_REQUEST_OPEN_DRAIN)
-	OpenSource = OutputFlag(sys.GPIOHANDLE_REQUEST_OPEN_SOURCE)
-)
-
-type InputFlag uint32
-
-const (
-	// InActiveLow inverts the value for reading.
-	InActiveLow InputFlag = InputFlag(sys.GPIOHANDLE_REQUEST_ACTIVE_LOW)
+	OpenDrain  = LineFlag(sys.GPIOHANDLE_REQUEST_OPEN_DRAIN)
+	OpenSource = LineFlag(sys.GPIOHANDLE_REQUEST_OPEN_SOURCE)
 )
 
 // OpenOutputLines opens up to 64 lines on this GPIO chip for output at once.
@@ -153,7 +146,7 @@ const (
 // the missing values will be 0.
 // Parameter flags is or'ed OutputFlag values that will be applied to all quested lines.
 // Parameter consumer is a desired consumer label for the selected GPIO line(s) such as "my-bitbanged-relay".
-func (c *Chip) OpenOutputLines(offsets []uint32, defaultValues []byte, flags OutputFlag, consumer string) (InputLines, error) {
+func (c *Chip) OpenOutputLines(offsets []uint32, defaultValues []byte, flags LineFlag, consumer string) (InputLines, error) {
 	return c.requestLines(offsets, defaultValues, uint32(flags)|sys.GPIOHANDLE_REQUEST_OUTPUT, consumer)
 }
 
@@ -161,13 +154,13 @@ func (c *Chip) OpenOutputLines(offsets []uint32, defaultValues []byte, flags Out
 // Parameter offsets are the local line offsets on this chip.
 // Parameter flags is 0 or InActiveLow that will be applied to all quested lines.
 // Parameter consumer is a desired consumer label for the selected GPIO line(s) such as "my-bitbanged-relay".
-func (c *Chip) OpenInputLines(offsets []uint32, flags InputFlag, consumer string) (InputLines, error) {
+func (c *Chip) OpenInputLines(offsets []uint32, flags LineFlag, consumer string) (InputLines, error) {
 	return c.requestLines(offsets, nil, uint32(flags)|sys.GPIOHANDLE_REQUEST_INPUT, consumer)
 }
 
 // OpenOutputLine opens a single GPIO line on this chip for output.
 // It is equivalent to OpenOutputLines with a single offset and devault value.
-func (c *Chip) OpenOutputLine(offset uint32, defaultValue byte, flags OutputFlag, consumer string) (OutputLine, error) {
+func (c *Chip) OpenOutputLine(offset uint32, defaultValue byte, flags LineFlag, consumer string) (OutputLine, error) {
 	var offsets = [1]uint32{offset}
 	var defaultValues = [1]byte{defaultValue}
 	return c.requestLines(offsets[:], defaultValues[:], uint32(flags)|sys.GPIOHANDLE_REQUEST_OUTPUT, consumer)
@@ -175,7 +168,7 @@ func (c *Chip) OpenOutputLine(offset uint32, defaultValue byte, flags OutputFlag
 
 // OpenInputLine opens a single GPIO line on this chip for input.
 // It is equivalent to OpenInputLines with a single offset.
-func (c *Chip) OpenInputLine(offset uint32, flags InputFlag, consumer string) (InputLine, error) {
+func (c *Chip) OpenInputLine(offset uint32, flags LineFlag, consumer string) (InputLine, error) {
 	var offsets = [1]uint32{offset}
 	return c.requestLines(offsets[:], nil, uint32(flags)|sys.GPIOHANDLE_REQUEST_INPUT, consumer)
 }
@@ -187,16 +180,16 @@ type Event struct {
 	Time time.Time
 }
 
-type EventFlags uint32
+type EventFlag uint32
 
 const (
-	RisingEdge  EventFlags = EventFlags(sys.GPIOEVENT_REQUEST_RISING_EDGE)
-	FallingEdge            = EventFlags(sys.GPIOEVENT_EVENT_FALLING_EDGE)
-	BothEdges              = RisingEdge | FallingEdge
+	RisingEdge  EventFlag = EventFlag(sys.GPIOEVENT_REQUEST_RISING_EDGE)
+	FallingEdge           = EventFlag(sys.GPIOEVENT_EVENT_FALLING_EDGE)
+	BothEdges             = RisingEdge | FallingEdge
 )
 
 // OpenInputLineWithEvent opens a single GPIO line on this chip for input and GPIO events.
-func (c *Chip) OpenInputLineWithEvent(offset uint32, flags InputFlag, eventFlags EventFlags, consumer string) (line InputLineWithEvent, err error) {
+func (c *Chip) OpenInputLineWithEvent(offset uint32, flags LineFlag, eventFlags EventFlag, consumer string) (line InputLineWithEvent, err error) {
 	if eventFlags == 0 {
 		err = fmt.Errorf("open GPIO line failed: invalid event flags %v, at least one edge is required", eventFlags)
 		return
