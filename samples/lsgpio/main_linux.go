@@ -14,10 +14,9 @@ import (
 
 func main() {
 	flag.Usage = func() {
-		fmt.Fprintf(flag.CommandLine.Output(),
-			`Usage: %v [options]
-List GPIO chips, lines and states
-`, os.Args[0])
+		fmt.Fprintln(flag.CommandLine.Output(),
+			`Usage: lsgpio [options]
+List GPIO chips, lines and states`)
 		flag.PrintDefaults()
 	}
 	var deviceName = flag.String("n", "", "List GPIOs on a `name`d device")
