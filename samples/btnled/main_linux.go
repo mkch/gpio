@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"flag"
 	"log"
 	"os"
 	"os/signal"
@@ -10,6 +11,10 @@ import (
 )
 
 func main() {
+	var btnOffset, ledOffset uint
+	flag.UintVar(&btnOffset, "btn", 2, "line `offset` of button")
+	flag.UintVar(&ledOffset, "led", 17, "line `offset` of LED")
+	flag.Parse()
 	devices := gpio.ChipDevices()
 	if len(devices) == 0 {
 		log.Fatal("No GPIO chip")
@@ -17,10 +22,10 @@ func main() {
 	chip := mustChip(gpio.OpenChip(devices[0]))
 	defer chip.Close()
 
-	led := mustLine(chip.OpenLine(3, 0, gpio.Output, "led"))
+	led := mustLine(chip.OpenLine(uint32(ledOffset), 0, gpio.Output, "led"))
 	defer led.Close()
 
-	btn := mustLineEvt(chip.OpenLineWithEvent(2, gpio.Input, gpio.BothEdges, "btn"))
+	btn := mustLineEvt(chip.OpenLineWithEvent(uint32(btnOffset), gpio.Input, gpio.BothEdges, "btn"))
 	defer btn.Close()
 
 	btnEvent, err := btn.Subscribe(context.TODO())
