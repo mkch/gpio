@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"errors"
 	"flag"
 	"fmt"
@@ -88,14 +87,17 @@ func monitorDevice(deviceName string, lineOffset int, handleFlags gpio.LineFlag,
 	fmt.Printf("Monitoring line %v on %v\n", lineOffset, deviceName)
 	fmt.Printf("Initial line value: %v\n", value)
 
-	eventChannel, err := line.Subscribe(context.TODO())
 	var i uint
-	for event := range eventChannel {
-		fmt.Printf("GPIO EVENT %v: ", event.Time)
-		if event.RisingEdge {
-			fmt.Println("rising edge")
-		} else {
+	for t := range line.Events() {
+		fmt.Printf("GPIO EVENT %v: ", t)
+		value, err = line.Value()
+		if err != nil {
+			return
+		}
+		if value == 0 {
 			fmt.Println("falling edge")
+		} else {
+			fmt.Println("rising edge")
 		}
 		i++
 		if i == loops {

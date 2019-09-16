@@ -3,7 +3,6 @@ package gpio
 import (
 	"fmt"
 	"path/filepath"
-	"time"
 	"unsafe"
 
 	"github.com/mkch/gpio/internal/sys"
@@ -169,13 +168,6 @@ func (c *Chip) OpenLine(offset uint32, defaultValue byte, flags LineFlag, consum
 	}
 	line = (*Line)(lines)
 	return
-}
-
-type Event struct {
-	// Triggered by a rising edge or not.
-	RisingEdge bool
-	// The best estimate of time of event occurrence.
-	Time time.Time
 }
 
 type EventFlag uint32

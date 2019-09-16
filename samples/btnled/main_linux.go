@@ -1,11 +1,12 @@
 package main
 
 import (
-	"context"
 	"flag"
+	"fmt"
 	"log"
 	"os"
 	"os/signal"
+	"time"
 
 	"github.com/mkch/gpio"
 )
@@ -28,25 +29,22 @@ func main() {
 	btn := mustLineEvt(chip.OpenLineWithEvent(uint32(btnOffset), gpio.Input, gpio.BothEdges, "btn"))
 	defer btn.Close()
 
-	btnEvent, err := btn.Subscribe(context.TODO())
-	if err != nil {
-		log.Panic(err)
-	}
-
 	exit := make(chan os.Signal, 2)
 	signal.Notify(exit, os.Interrupt)
 
 	for {
 		select {
-		case event, ok := <-btnEvent:
+		case event, ok := <-btn.Events():
 			if !ok {
 				return
 			}
-			if event.RisingEdge {
+			fmt.Println(event)
+			if mustValue(btn.Value()) == 1 {
 				must(led.SetValue(0))
 			} else {
 				must(led.SetValue(1))
 			}
+			time.Sleep(time.Millisecond * 10)
 		case <-exit:
 			return
 		}
