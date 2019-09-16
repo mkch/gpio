@@ -69,8 +69,13 @@ func newInputLineWithEvents(chipFd int, offset uint32, flags, eventFlags uint32,
 		return
 	}
 
+	fd2, err := unix.Dup(int(req.Fd))
+	if err != nil {
+		err = fmt.Errorf("request GPIO event failed: dup %w", err)
+		return
+	}
 	line = &LineWithEvent{
-		l:      Line{fd: int(req.Fd), numLines: 1},
+		l:      Line{fd: fd2, numLines: 1},
 		events: events,
 	}
 	return
