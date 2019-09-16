@@ -1,3 +1,5 @@
+// https://github.com/torvalds/linux/blob/master/tools/gpio/gpio-hammer.c
+//
 package main
 
 import (

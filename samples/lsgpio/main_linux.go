@@ -1,4 +1,5 @@
 // https://github.com/torvalds/linux/blob/master/tools/gpio/lsgpio.c
+//
 package main
 
 import (
