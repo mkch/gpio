@@ -2,13 +2,11 @@ package gpiosysfs
 
 import (
 	"os"
-	"sync"
 )
 
 type gpioFile struct {
 	Path         string
 	rfile, wfile *os.File
-	rlock, wlock sync.Mutex
 }
 
 func (f *gpioFile) Close() (err error) {
@@ -28,8 +26,6 @@ func (f *gpioFile) Close() (err error) {
 }
 
 func (f *gpioFile) ReadAt0(p []byte) (n int, err error) {
-	f.rlock.Lock()
-	defer f.rlock.Unlock()
 	if f.rfile == nil {
 		f.rfile, err = os.Open(f.Path)
 		if err != nil {
@@ -41,8 +37,6 @@ func (f *gpioFile) ReadAt0(p []byte) (n int, err error) {
 }
 
 func (f *gpioFile) WriteAt0(p []byte) (n int, err error) {
-	f.wlock.Lock()
-	f.wlock.Unlock()
 	if f.wfile == nil {
 		f.wfile, err = os.OpenFile(f.Path, os.O_WRONLY, 0)
 		if err != nil {
