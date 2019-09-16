@@ -44,7 +44,7 @@ gpio-hammer -n gpiochip0 -o 4`)
 }
 
 func hammerDevice(deviceName string, offsets []uint32, loops uint) (err error) {
-	const swirr = "-\\|/"
+	const swirr = `-\|/`
 
 	chip, err := gpio.OpenChip(deviceName)
 	if err != nil {
