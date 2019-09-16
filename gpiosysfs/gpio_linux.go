@@ -342,11 +342,11 @@ func (pin *PinWithEvent) Close() (err error) {
 	return err2
 }
 
-// Events returns an channel from which the occurrence time of GPIO events can be read.
+// Events returns a channel from which the occurrence time of GPIO events can be read.
 // The best estimate of time of event occurrence is sent to the returned channel,
 // and the channel is closed when l is closed.
 //
-// Package gpio will not block sending to the channel: it only keeps the lastest
+// Package gpiosysfs will not block sending to the channel: it only keeps the lastest
 // value in the channel.
 func (pin *PinWithEvent) Events() <-chan time.Time {
 	return pin.events.Events()

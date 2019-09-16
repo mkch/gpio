@@ -77,7 +77,7 @@ func newInputLineWithEvents(chipFd int, offset uint32, flags, eventFlags uint32,
 	return
 }
 
-// Events returns an channel from which the occurrence time of GPIO events can be read.
+// Events returns a channel from which the occurrence time of GPIO events can be read.
 // The best estimate of time of event occurrence is sent to the returned channel,
 // and the channel is closed when l is closed.
 //

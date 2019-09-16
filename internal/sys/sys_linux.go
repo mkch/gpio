@@ -1,3 +1,4 @@
+// Package sys wraps necessary linux syscalls to implement GPIO interface.
 package sys
 
 import (

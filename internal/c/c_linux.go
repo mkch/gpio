@@ -1,3 +1,4 @@
+// Package c is used is test code only.
 package c
 
 /*

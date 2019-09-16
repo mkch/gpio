@@ -1,3 +1,4 @@
+// Package fdevents implements epoll_wait loop for GPIO events and exposes a channel interface.
 package fdevents
 
 import (
@@ -23,9 +24,9 @@ type FdEvents struct {
 // New creates a FdEvents and returns any error encountered.
 // The returned FdEvents waits fd for fdEpollEvents in a epoll_wait loop.
 // If epoll_wait returns successfully, readFd is called to generate a value,
-// and that value is sent to the event channel returned by Events().
+// and that value is sent to the event channel returned by Events.
 //
-// readFd should returns the best estimate of time of event occurrence.
+// readFd should return the best estimate of time of event occurrence.
 //
 // Package fdevents will not block sending to the channel: it only keeps the lastest
 // value in the channel.
@@ -151,8 +152,12 @@ func (events *FdEvents) Close() (err error) {
 	return
 }
 
-// Events returns the event channel.
-// The returned channel is closed when events is closed.
+// Events returns a channel from which the occurrence time of events can be read.
+// The best estimate of time of event occurrence is sent to the returned channel,
+// and the channel is closed when events is closed.
+//
+// Package fdevents will not block sending to the channel: it only keeps the lastest
+// value in the channel.
 func (events *FdEvents) Events() <-chan time.Time {
 	return events.events
 }
