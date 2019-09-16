@@ -22,20 +22,18 @@ func TestFdEvents(t1 *testing.T) {
 	defer unix.Close(pipe[0])
 	defer unix.Close(pipe[1])
 
-	var lastSend int64
-
-	var done = make(chan struct{})
-
 	go func() {
-		defer close(done)
 		var v = time.Now().Unix()
 		for i := 0; i < 10; i++ {
 			_, err := unix.Write(pipe[1], (*[unsafe.Sizeof(v)]byte)(unsafe.Pointer(&v))[:])
 			t.AssertNoError(err)
-			lastSend = v
-			time.Sleep(time.Microsecond * time.Duration(rand.Int63n(100)))
+			time.Sleep(time.Microsecond * time.Duration(rand.Int63n(500)))
 			v++
 		}
+		// Exit notification.
+		v = 0
+		_, err := unix.Write(pipe[1], (*[unsafe.Sizeof(v)]byte)(unsafe.Pointer(&v))[:])
+		t.AssertNoError(err)
 	}()
 
 	events, err := fdevents.New(pipe[0], unix.EPOLLIN, func(fd int) time.Time {
@@ -46,7 +44,7 @@ func TestFdEvents(t1 *testing.T) {
 	})
 	t.AssertNoError(err)
 
-	defer func() { t.AssertNoError(events.Close()) }()
+	defer func() { t.Assert(events.Close(), NotEquals(nil)) }()
 
 	var received []int64
 
@@ -57,16 +55,18 @@ for_loop:
 			if !ok {
 				break for_loop
 			}
+			if v.Unix() == 0 {
+				t.AssertNoError(events.Close())
+			}
 			received = append(received, v.Unix())
-		case <-done:
-			break for_loop
+
 		}
 	}
 
 	t.AssertTrue(len(received) > 0)
 	t.Assert(received, Matches(func(v interface{}) bool {
-		return received[len(received)-1] == lastSend
-	}).SetMessage(fmt.Sprintf("The last element of <%v> is expected to be <%v>", received, lastSend)))
+		return received[len(received)-1] == 0
+	}).SetMessage(fmt.Sprintf("The last element of <%v> is expected to be <%v>", received, 0)))
 
 }
 
@@ -86,7 +86,7 @@ func TestFdEventsClose(t1 *testing.T) {
 
 	events, err := fdevents.New(pipe[0], unix.EPOLLIN, func(fd int) time.Time {
 		var v int64
-		_, err := io.ReadFull(Fd(fd), (*[unsafe.Sizeof(v)]byte)(unsafe.Pointer(&v))[:])
+		_, err := io.ReadFull(sys.FdReader(fd), (*[unsafe.Sizeof(v)]byte)(unsafe.Pointer(&v))[:])
 		t.AssertNoError(err)
 		return time.Unix(v, 0)
 	})
