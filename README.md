@@ -2,6 +2,8 @@
 
 Golang implementation of linux GPIO interface.
 
+[![GoDoc](https://godoc.org/github.com/mkch/gpio?status.svg)](https://godoc.org/github.com/mkch/gpio)
+
 ## Features
 
 - Pure go. No C code. Easy to cross compile(Write code on PC or Mac and deploy the binary on Raspberry Pi etc.).
