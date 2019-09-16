@@ -16,7 +16,7 @@ var inputLine uint
 var outputLine uint
 
 func TestMain(m *testing.M) {
-	flag.StringVar(&chipDev, "chip", "/dev/gpiochip0", "GPIO chip device used in tests, e.g. /dev/gpiochip0")
+	flag.StringVar(&chipDev, "chip", "gpiochip0", "GPIO chip device used in tests, e.g. gpiochip0")
 	flag.UintVar(&inputLine, "in-line", 2, "The offset of input GPIO line on chip used in tests")
 	flag.UintVar(&outputLine, "out-line", 2, "The offset of output GPIO line on chip used in tests")
 	flag.Parse()

@@ -66,7 +66,7 @@ gpio-event-mon -n gpiochip0 -o 4 -r -f`)
 }
 
 func monitorDevice(deviceName string, lineOffset int, handleFlags gpio.LineFlag, eventFlags gpio.EventFlag, loops uint) (err error) {
-	chip, err := gpio.OpenChip("/dev/" + deviceName)
+	chip, err := gpio.OpenChip(deviceName)
 	if err != nil {
 		return
 	}

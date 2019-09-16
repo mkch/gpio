@@ -17,6 +17,9 @@ func ChipDevices() (chips []string) {
 		// The only possible returned error is ErrBadPattern, when pattern is malformed.
 		panic(err)
 	}
+	for i, dev := range chips {
+		chips[i] = filepath.Base(dev)
+	}
 	return
 }
 
@@ -38,9 +41,10 @@ type Chip struct {
 
 // OpenChip opens a certain GPIO chip device.
 func OpenChip(device string) (chip *Chip, err error) {
-	fd, err := unix.Open(device, unix.O_RDONLY, 0)
+	devPath := filepath.Join("/dev", device)
+	fd, err := unix.Open(devPath, unix.O_RDONLY, 0)
 	if err != nil {
-		err = fmt.Errorf("open chip %v failed: %w", device, err)
+		err = fmt.Errorf("open chip %v failed: %w", devPath, err)
 		return
 	}
 	chip = &Chip{dev: device, fd: fd}
