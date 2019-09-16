@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"log"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -15,8 +14,6 @@ import (
 	"github.com/mkch/gpio/internal/fdevents"
 	"golang.org/x/sys/unix"
 )
-
-var Logger *log.Logger = log.New(os.Stderr, "gpio: ", log.LstdFlags)
 
 // Chip is the information of a GPIO controller chip.
 type Chip struct {

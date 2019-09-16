@@ -3,8 +3,6 @@ package gpio
 import (
 	"fmt"
 	"io"
-	"log"
-	"os"
 	"syscall"
 	"time"
 	"unsafe"
@@ -13,8 +11,6 @@ import (
 	"github.com/mkch/gpio/internal/sys"
 	"golang.org/x/sys/unix"
 )
-
-var Logger *log.Logger = log.New(os.Stderr, "gpio: ", log.LstdFlags)
 
 // LineWithEvent is an opened GPIO line whose events can be subscribed.
 type LineWithEvent struct {
@@ -44,7 +40,7 @@ func readGPIOLineEventFd(fd int) time.Time {
 		if err == syscall.EINTR {
 			return time.Now() // Hack here.
 		}
-		Logger.Panic(fmt.Errorf("failed to read GPIO event: %w", err))
+		panic(fmt.Errorf("failed to read GPIO event: %w", err))
 	}
 
 	sec := uint64(time.Nanosecond) * eventData.Timestamp / uint64(time.Second)
