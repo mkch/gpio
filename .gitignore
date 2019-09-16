@@ -27,3 +27,4 @@ samples/btnled/btnled
 samples/gpio-event-mon/gpio-event-mon
 samples/gpio-hammer/gpio-hammer
 samples/lsgpio/lsgpio
+gpiosysfs/samples/btnled/btnled

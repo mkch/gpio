@@ -248,21 +248,25 @@ func (pin *Pin) Edge() (edge Edge, err error) {
 	return
 }
 
-// Value returns the current value of the pin. True for high and false for low.
-func (pin *Pin) Value() (value bool, err error) {
+// Value returns the current value of the pin. 1 for high and 0 for low.
+func (pin *Pin) Value() (value byte, err error) {
 	var buf [1]byte
 	_, err = pin.value.ReadAt0(buf[:])
 	if err != nil {
 		err = wrapPinError(pin, "get value", err)
 	}
-	value = buf[0] == '1'
+	if buf[0] == '0' {
+		value = 0
+	} else {
+		value = 1
+	}
 	return
 }
 
-// SetValue set the current value of the pin. True for high and false for low.
-func (pin *Pin) SetValue(value bool) (err error) {
+// SetValue set the current value of the pin. 1 for high and 0 for low.
+func (pin *Pin) SetValue(value byte) (err error) {
 	var buf = [1]byte{'1'}
-	if !value {
+	if value == 0 {
 		buf[0] = '0'
 	}
 	_, err = pin.value.WriteAt0(buf[:])
