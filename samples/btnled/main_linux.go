@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"log"
 	"os"
 	"os/signal"
@@ -34,11 +33,10 @@ func main() {
 
 	for {
 		select {
-		case event, ok := <-btn.Events():
+		case _, ok := <-btn.Events():
 			if !ok {
 				return
 			}
-			fmt.Println(event)
 			if mustValue(btn.Value()) == 1 {
 				must(led.SetValue(0))
 			} else {
