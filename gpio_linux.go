@@ -188,7 +188,7 @@ func (c *Chip) OpenLineWithEvents(offset uint32, flags LineFlag, eventFlags Even
 		err = fmt.Errorf("open GPIO line failed: invalid event flags %v, at least one edge is required", eventFlags)
 		return
 	}
-	return newInputLineEvents(c.fd, offset, uint32(flags), uint32(eventFlags), consumer)
+	return newInputLineWithEvents(c.fd, offset, uint32(flags), uint32(eventFlags), consumer)
 }
 
 // LineInfo represents the information about a certain GPIO line

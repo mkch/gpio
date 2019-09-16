@@ -72,7 +72,7 @@ func monitorDevice(deviceName string, lineOffset int, handleFlags gpio.LineFlag,
 	}
 	defer chip.Close()
 
-	line, err := chip.OpenLineWithEvent(uint32(lineOffset), handleFlags, eventFlags, "gpio-event-mon")
+	line, err := chip.OpenLineWithEvents(uint32(lineOffset), handleFlags, eventFlags, "gpio-event-mon")
 	if err != nil {
 		return
 	}

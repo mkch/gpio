@@ -25,7 +25,7 @@ func main() {
 	led := mustLine(chip.OpenLine(uint32(ledOffset), 0, gpio.Output, "led"))
 	defer led.Close()
 
-	btn := mustLineEvt(chip.OpenLineWithEvent(uint32(btnOffset), gpio.Input, gpio.BothEdges, "btn"))
+	btn := mustLineEvt(chip.OpenLineWithEvents(uint32(btnOffset), gpio.Input, gpio.BothEdges, "btn"))
 	defer btn.Close()
 
 	exit := make(chan os.Signal, 2)

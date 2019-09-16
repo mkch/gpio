@@ -52,7 +52,7 @@ func readGPIOLineEventFd(fd int) time.Time {
 	return time.Unix(int64(sec), int64(nano))
 }
 
-func newInputLineEvents(chipFd int, offset uint32, flags, eventFlags uint32, consumer string) (line *LineWithEvent, err error) {
+func newInputLineWithEvents(chipFd int, offset uint32, flags, eventFlags uint32, consumer string) (line *LineWithEvent, err error) {
 	var req = sys.GPIOEventRequest{
 		LineOffset:  offset,
 		HandleFlags: uint32(flags),
