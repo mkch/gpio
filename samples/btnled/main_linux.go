@@ -5,7 +5,6 @@ import (
 	"log"
 	"os"
 	"os/signal"
-	"time"
 
 	"github.com/mkch/gpio"
 )
@@ -42,7 +41,6 @@ func main() {
 			} else {
 				must(led.SetValue(1))
 			}
-			time.Sleep(time.Millisecond * 10)
 		case <-exit:
 			return
 		}
