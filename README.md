@@ -14,7 +14,7 @@ Golang implementation of linux GPIO interface.
 
 - Linux GPIO tools(tools/gpio), aka. *lsgpio*, *gpio-event-mon* and *gpio-hammer*, implemented in go. Serve both as code examples and diagnostic tools. See **samples** directory.
 
-- Legacy GPIO sysfs interface (aka. /sys/class/gpio) supporting. See **gpiosysfs** package.
+- Legacy GPIO sysfs interface(aka. /sys/class/gpio) supporting. See **gpiosysfs** package.
 
 ## Requirements
 
@@ -31,3 +31,7 @@ Golang implementation of linux GPIO interface.
 - `bash: ./lsgpio: cannot execute binary file`:
   
   If your shell complains, please run the binary(lsgpio in this example) on linux.
+
+- `failed to set direction of GPIO pin #N: open /sys/class/gpio/gpioN/direction: permission denied`:
+
+  The legacy GPIO sysfs interface may need **root** privilege to operate. Try `sudo`.
