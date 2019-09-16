@@ -10,10 +10,9 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
-	"syscall"
 	"time"
-	"unsafe"
 
+	"github.com/mkch/gpio/internal/fdevents"
 	"golang.org/x/sys/unix"
 )
 
@@ -300,12 +299,11 @@ func (pin *Pin) SetActiveLow(value bool) (err error) {
 // PinWithEvent is an opened GPIO pin whose events can be read.
 type PinWithEvent struct {
 	*Pin
-	events              chan time.Time
-	exitWaitLoopEventFd int
+	events *fdevents.FdEvents
 }
 
-// OpenPinWithEvent opens a GPIO pin for input and GPIO events.
-func OpenPinWithEvent(n int) (pin *PinWithEvent, err error) {
+// OpenPinWithEvents opens a GPIO pin for input and GPIO events.
+func OpenPinWithEvents(n int) (pin *PinWithEvent, err error) {
 	p, err := OpenPin(n)
 	if err != nil {
 		return
@@ -321,112 +319,26 @@ func OpenPinWithEvent(n int) (pin *PinWithEvent, err error) {
 		return
 	}
 
-	wakeUpEventFd, err := unix.Eventfd(0, 0)
+	events, err := fdevents.New(fd, unix.EPOLLPRI|unix.EPOLLERR|unix.EPOLLET, func(fd int) time.Time { return time.Now() })
 	if err != nil {
-		err = fmt.Errorf("failed to call eventfd when preparing interrupt of pin #%v: %w", p.n, err)
-		return
-	}
-	epollFd, err := unix.EpollCreate(1)
-	if err != nil {
-		err = fmt.Errorf("failed to call epoll_create when preparing interrupt of pin #%v: %w", p.n, err)
-		return
-	}
-
-	// epoll_wait both fds.
-	err = unix.EpollCtl(epollFd, unix.EPOLL_CTL_ADD, wakeUpEventFd, &unix.EpollEvent{
-		Events: unix.EPOLLIN,
-		Fd:     int32(wakeUpEventFd),
-	})
-	if err != nil {
-		err = fmt.Errorf("failed to call epoll_ctl when preparing interrupt of pin #%v: %w", p.n, err)
-		return
-	}
-
-	err = unix.EpollCtl(epollFd, unix.EPOLL_CTL_ADD, fd, &unix.EpollEvent{
-		Events: unix.EPOLLPRI | unix.EPOLLERR | unix.EPOLLET,
-		Fd:     int32(fd),
-	})
-	if err != nil {
-		err = fmt.Errorf("failed to call epoll_ctl when preparing interrupt of pin #%v: %w", p.n, err)
 		return
 	}
 
 	pin = &PinWithEvent{
-		Pin:                 p,
-		events:              make(chan time.Time, 1), // Buffer 1 to store the latest.
-		exitWaitLoopEventFd: wakeUpEventFd,
+		Pin:    p,
+		events: events,
 	}
 
 	return
-}
-
-func (pin *PinWithEvent) waitLoop(epollFd, fd int) {
-	defer func() {
-		err := unix.Close(pin.exitWaitLoopEventFd)
-		if err != nil {
-			Logger.Panic(fmt.Errorf("failed to call close: %w", err))
-		}
-		err = unix.Close(epollFd)
-		if err != nil {
-			Logger.Panic(fmt.Errorf("failed to call close: %w", err))
-		}
-		err = unix.Close(fd)
-		if err != nil {
-			Logger.Panic(fmt.Errorf("failed to call close: %w", err))
-		}
-		close(pin.events)
-	}()
-
-	var waitEvent [2]unix.EpollEvent
-epoll_wait_loop:
-	for {
-		n, err := unix.EpollWait(epollFd, waitEvent[:], -1)
-		if err != nil {
-			if err == syscall.EINTR {
-				continue
-			}
-			Logger.Panic(fmt.Errorf("failed to wait GPIO event: %w", err))
-		}
-		for i := 0; i < n; i++ {
-			switch waitEvent[i].Fd {
-			case int32(fd):
-				// Interrupt caused by GPIO event.
-				t := time.Now()
-				// Discard the unread old value.
-				select {
-				case <-pin.events:
-				default:
-				}
-				// Send the latest.
-				pin.events <- t
-			case int32(pin.exitWaitLoopEventFd):
-				break epoll_wait_loop
-			}
-		}
-	}
 }
 
 func (pin *PinWithEvent) Close() (err error) {
-	err = pin.Pin.Close()
-	if err != nil {
-		return
+	err1 := pin.Pin.Close()
+	err2 := pin.events.Close()
+	if err1 != nil {
+		return err1
 	}
-	pin.notifyWaitLoopToExit()
-	return
-}
-
-func (pin *PinWithEvent) notifyWaitLoopToExit() (err error) {
-	// Wakeup epoll_wait loop adding 1 to the event counter.
-	var one = uint64(1)
-	n, err := unix.Write(pin.exitWaitLoopEventFd, (*[unsafe.Sizeof(one)]byte)(unsafe.Pointer(&one))[:])
-	if err != nil {
-		err = fmt.Errorf("failed to write to event fd: %w", err)
-		return
-	}
-	if n != int(unsafe.Sizeof(one)) {
-		err = fmt.Errorf("failed to write to event fd: short write: %v out of %v", n, unsafe.Sizeof(one))
-	}
-	return
+	return err2
 }
 
 // Events returns an channel from which the occurrence time of GPIO events can be read.
@@ -436,7 +348,7 @@ func (pin *PinWithEvent) notifyWaitLoopToExit() (err error) {
 // Package gpio will not block sending to the channel: it only keeps the lastest
 // value in the channel.
 func (pin *PinWithEvent) Events() <-chan time.Time {
-	return pin.events
+	return pin.events.Events()
 }
 
 func writeExisting(path string, content string) (err error) {

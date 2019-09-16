@@ -93,3 +93,10 @@ func Ioctl(fd int, request uintptr, a uintptr) error {
 	}
 	return nil
 }
+
+// FdReader is a unix file descriptor as io.Reader.
+type FdReader int
+
+func (fd FdReader) Read(p []byte) (n int, err error) {
+	return unix.Read(int(fd), p)
+}

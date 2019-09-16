@@ -182,8 +182,8 @@ const (
 	BothEdges             = RisingEdge | FallingEdge
 )
 
-// OpenLineWithEvent opens a single GPIO line on this chip for input and GPIO events.
-func (c *Chip) OpenLineWithEvent(offset uint32, flags LineFlag, eventFlags EventFlag, consumer string) (line *LineWithEvent, err error) {
+// OpenLineWithEvents opens a single GPIO line on this chip for input and GPIO events.
+func (c *Chip) OpenLineWithEvents(offset uint32, flags LineFlag, eventFlags EventFlag, consumer string) (line *LineWithEvent, err error) {
 	if eventFlags == 0 {
 		err = fmt.Errorf("open GPIO line failed: invalid event flags %v, at least one edge is required", eventFlags)
 		return

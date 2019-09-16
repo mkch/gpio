@@ -1,4 +1,4 @@
-github.com/mkch/asserting v0.0.0-20190913074031-29e0011a678c h1:fLUbI15ukPxNS1Xq1aQYbhsZGUwmhPYjQt6YFx4rZcc=
-github.com/mkch/asserting v0.0.0-20190913074031-29e0011a678c/go.mod h1:7QF1TGIJmEibF74aU9YWLLfDOnl4R94hWzpD/zWowbM=
-golang.org/x/sys v0.0.0-20190912141932-bc967efca4b8 h1:41hwlulw1prEMBxLQSlMSux1zxJf07B3WPsdjJlKZxE=
-golang.org/x/sys v0.0.0-20190912141932-bc967efca4b8/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
+github.com/mkch/asserting v0.0.0-20190916092325-c18221b2f2b2 h1:ZuTZrURK+9dqhtVw11exJ65tjbh3DVXj4L5R1KnFAU8=
+github.com/mkch/asserting v0.0.0-20190916092325-c18221b2f2b2/go.mod h1:7QF1TGIJmEibF74aU9YWLLfDOnl4R94hWzpD/zWowbM=
+golang.org/x/sys v0.0.0-20190913121621-c3b328c6e5a7 h1:wYqz/tQaWUgGKyx+B/rssSE6wkIKdY5Ee6ryOmzarIg=
+golang.org/x/sys v0.0.0-20190913121621-c3b328c6e5a7/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
