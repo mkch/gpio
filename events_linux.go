@@ -21,12 +21,15 @@ type LineWithEvent struct {
 	// the current state of line if the event consuming is slower than
 	// producing.
 	events              chan time.Time
-	closed              chan struct{}
 	exitWaitLoopEventFd int
 }
 
 func (l *LineWithEvent) Close() (err error) {
-	return l.l.Close()
+	err = l.l.Close()
+	if err != nil {
+		return
+	}
+	return l.notifyWaitLoopToExit()
 }
 
 // Value returns the current value of the GPIO line. 1 (high) or 0 (low).
@@ -80,17 +83,10 @@ func newInputLineEvents(chipFd int, offset uint32, flags, eventFlags uint32, con
 	line = &LineWithEvent{
 		l:                   Line{fd: int(req.Fd), numLines: 1},
 		exitWaitLoopEventFd: wakeUpEventFd,
-		closed:              make(chan struct{}),
 		events:              make(chan time.Time, 1), // Buffer 1 to store the latest.
 	}
 
 	go line.waitLoop(epollFd)
-
-	go func() {
-		<-line.closed
-		// Exit wait loop.
-		line.notifyWaitLoopToExit()
-	}()
 	return
 }
 
