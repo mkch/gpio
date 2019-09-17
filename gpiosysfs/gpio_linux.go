@@ -320,7 +320,7 @@ func OpenPinWithEvents(n int) (pin *PinWithEvent, err error) {
 		return
 	}
 
-	events, err := fdevents.New(fd, unix.EPOLLPRI|unix.EPOLLERR|unix.EPOLLET, func(fd int) time.Time { return time.Now() })
+	events, err := fdevents.New(fd, true, unix.EPOLLPRI|unix.EPOLLERR|unix.EPOLLET, func(fd int) time.Time { return time.Now() })
 	if err != nil {
 		return
 	}

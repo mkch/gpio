@@ -30,7 +30,7 @@ type FdEvents struct {
 //
 // Package fdevents will not block sending to the channel: it only keeps the lastest
 // value in the channel.
-func New(fd int, fdEpollEvents uint32, readFd func(fd int) time.Time) (events *FdEvents, err error) {
+func New(fd int, closeFdOnClose bool, fdEpollEvents uint32, readFd func(fd int) time.Time) (events *FdEvents, err error) {
 	wakeUpEventFd, err := unix.Eventfd(0, 0)
 	if err != nil {
 		err = fmt.Errorf("request GPIO event failed: eventfd: %w", err)
@@ -73,11 +73,11 @@ func New(fd int, fdEpollEvents uint32, readFd func(fd int) time.Time) (events *F
 	runtime.SetFinalizer(events, func(p *FdEvents) { p.Close() })
 
 	events.waitLoopDone.Add(1)
-	go events.waitLoop(epollFd, fd, readFd)
+	go events.waitLoop(fd, closeFdOnClose, epollFd, readFd)
 	return
 }
 
-func (events *FdEvents) waitLoop(epollFd int, fd int, readFd func(fd int) time.Time) {
+func (events *FdEvents) waitLoop(fd int, closeFdOnClose bool, epollFd int, readFd func(fd int) time.Time) {
 	defer func() {
 		err := unix.Close(events.exitWaitLoopEventFd)
 		if err != nil {
@@ -87,9 +87,11 @@ func (events *FdEvents) waitLoop(epollFd int, fd int, readFd func(fd int) time.T
 		if err != nil {
 			panic(fmt.Errorf("failed to call close: %w", err))
 		}
-		err = unix.Close(fd)
-		if err != nil {
-			panic(fmt.Errorf("failed to call close: %w", err))
+		if closeFdOnClose {
+			err = unix.Close(fd)
+			if err != nil {
+				panic(fmt.Errorf("failed to call close: %w", err))
+			}
 		}
 		close(events.events)
 		events.waitLoopDone.Done()

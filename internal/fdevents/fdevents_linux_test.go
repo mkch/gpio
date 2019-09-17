@@ -36,7 +36,7 @@ func TestFdEvents(t1 *testing.T) {
 		t.AssertNoError(err)
 	}()
 
-	events, err := fdevents.New(pipe[0], unix.EPOLLIN, func(fd int) time.Time {
+	events, err := fdevents.New(pipe[0], false, unix.EPOLLIN, func(fd int) time.Time {
 		var v int64
 		_, err := io.ReadFull(sys.FdReader(fd), (*[unsafe.Sizeof(v)]byte)(unsafe.Pointer(&v))[:])
 		t.AssertNoError(err)
@@ -75,7 +75,7 @@ func TestFdEventsClose(t1 *testing.T) {
 
 	var pipe [2]int
 	t.AssertNoError(unix.Pipe(pipe[:]))
-	defer unix.Close(pipe[0])
+	// pipe[0] will be closed by events.
 	defer unix.Close(pipe[1])
 
 	go func() {
@@ -84,7 +84,7 @@ func TestFdEventsClose(t1 *testing.T) {
 		t.AssertNoError(err)
 	}()
 
-	events, err := fdevents.New(pipe[0], unix.EPOLLIN, func(fd int) time.Time {
+	events, err := fdevents.New(pipe[0], true /*close fd on close*/, unix.EPOLLIN, func(fd int) time.Time {
 		var v int64
 		_, err := io.ReadFull(sys.FdReader(fd), (*[unsafe.Sizeof(v)]byte)(unsafe.Pointer(&v))[:])
 		t.AssertNoError(err)

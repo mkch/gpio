@@ -19,8 +19,11 @@ type LineWithEvent struct {
 }
 
 func (l *LineWithEvent) Close() (err error) {
-	err1 := l.l.Close()
-	err2 := l.events.Close()
+	// Close l.events first because Line.Close will close the fd,
+	// but l.events still needs it until it is Closed.
+	// l.events.Close won't close the fd. See newInputLineWithEvents.
+	err1 := l.events.Close()
+	err2 := l.l.Close()
 	if err1 != nil {
 		return err1
 	}
@@ -59,19 +62,14 @@ func newInputLineWithEvents(chipFd int, offset uint32, flags, eventFlags uint32,
 		err = fmt.Errorf("request GPIO event failed: ioctl %w", err)
 		return
 	}
-	events, err := fdevents.New(int(req.Fd), unix.EPOLLIN|unix.EPOLLPRI|unix.EPOLLET, readGPIOLineEventFd)
+	events, err := fdevents.New(int(req.Fd), false /*NOT close fd*/, unix.EPOLLIN|unix.EPOLLPRI|unix.EPOLLET, readGPIOLineEventFd)
 	if err != nil {
 		unix.Close(int(req.Fd))
 		return
 	}
 
-	fd2, err := unix.Dup(int(req.Fd))
-	if err != nil {
-		err = fmt.Errorf("request GPIO event failed: dup %w", err)
-		return
-	}
 	line = &LineWithEvent{
-		l:      Line{fd: fd2, numLines: 1},
+		l:      Line{fd: int(req.Fd), numLines: 1},
 		events: events,
 	}
 	return
