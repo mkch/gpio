@@ -26,7 +26,7 @@ func (l *Line) Value() (value byte, err error) {
 	return
 }
 
-// SerValue sets the value of the GPIO line.
+// SetValue sets the value of the GPIO line.
 // Value should be 0 (low) or 1 (high), anything else than 0 will be interpreted as 1 (high).
 func (l *Line) SetValue(value byte) (err error) {
 	var values = [1]byte{value}
@@ -59,7 +59,7 @@ func (l *Lines) Values() (values []byte, err error) {
 	return
 }
 
-// SerValue sets the value of the GPIO line.
+// SetValue sets the value of the GPIO line.
 // Value should be 0 (low) or 1 (high), anything else than 0 will be interpreted as 1 (high).
 func (l *Lines) SetValues(values []byte) (err error) {
 	if len(values) > 64 {
