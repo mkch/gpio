@@ -90,16 +90,16 @@ func monitorDevice(deviceName string, lineOffset int, handleFlags gpio.LineFlag,
 	fmt.Printf("Initial line value: %v\n", value)
 
 	var i uint
-	for t := range line.Events() {
-		fmt.Printf("GPIO EVENT %v: ", t)
+	for event := range line.Events() {
+		fmt.Printf("GPIO EVENT %v: ", event.Time)
 		value, err = line.Value()
 		if err != nil {
 			return
 		}
-		if value == 0 {
-			fmt.Println("falling edge")
-		} else {
+		if event.RisingEdge {
 			fmt.Println("rising edge")
+		} else {
+			fmt.Println("falling edge")
 		}
 		i++
 		if i == loops {

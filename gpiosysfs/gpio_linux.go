@@ -320,7 +320,13 @@ func OpenPinWithEvents(n int) (pin *PinWithEvent, err error) {
 		return
 	}
 
-	events, err := fdevents.New(fd, true, unix.EPOLLPRI|unix.EPOLLERR|unix.EPOLLET, func(fd int) time.Time { return time.Now() })
+	events, err := fdevents.New(fd, true, unix.EPOLLPRI|unix.EPOLLERR, func(fd int) *fdevents.Event {
+		v, err := p.Value()
+		if err != nil {
+			panic(fmt.Errorf("failed to read GPIO event: %w", err))
+		}
+		return &fdevents.Event{RisingEdge: v == 1, Time: time.Now()}
+	})
 	if err != nil {
 		return
 	}
@@ -334,21 +340,24 @@ func OpenPinWithEvents(n int) (pin *PinWithEvent, err error) {
 }
 
 func (pin *PinWithEvent) Close() (err error) {
-	err1 := pin.Pin.Close()
-	err2 := pin.events.Close()
+	// Close pin.events first.
+	// pin.Pin is still used by pin.events before pin.events is closed.
+	err1 := pin.events.Close()
+	err2 := pin.Pin.Close()
 	if err1 != nil {
 		return err1
 	}
 	return err2
 }
 
+type Event = fdevents.Event
+
 // Events returns a channel from which the occurrence time of GPIO events can be read.
-// The best estimate of time of event occurrence is sent to the returned channel,
-// and the channel is closed when l is closed.
+// The GPIO events of this pin will be sent to the returned channel, and the channel is closed when l is closed.
 //
 // Package gpiosysfs will not block sending to the channel: it only keeps the lastest
 // value in the channel.
-func (pin *PinWithEvent) Events() <-chan time.Time {
+func (pin *PinWithEvent) Events() <-chan *Event {
 	return pin.events.Events()
 }
 

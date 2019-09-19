@@ -13,9 +13,17 @@ import (
 	"golang.org/x/sys/unix"
 )
 
+// Event is a GPIO event.
+type Event struct {
+	RisingEdge bool      // Whether this event is triggered by a rising edge.
+	Time       time.Time // The best estimate of time of event occurrence.
+}
+
+type ReadFdFunc func(fd int) *Event
+
 // FdEvents converts epoll_wait loops to a chanel.
 type FdEvents struct {
-	events              chan time.Time
+	events              chan *Event
 	waitLoopDone        sync.WaitGroup
 	exitWaitLoopEventFd int
 	closed              bool
@@ -30,7 +38,7 @@ type FdEvents struct {
 //
 // Package fdevents will not block sending to the channel: it only keeps the lastest
 // value in the channel.
-func New(fd int, closeFdOnClose bool, fdEpollEvents uint32, readFd func(fd int) time.Time) (events *FdEvents, err error) {
+func New(fd int, closeFdOnClose bool, fdEpollEvents uint32, readFd ReadFdFunc) (events *FdEvents, err error) {
 	wakeUpEventFd, err := unix.Eventfd(0, 0)
 	if err != nil {
 		err = fmt.Errorf("request GPIO event failed: eventfd: %w", err)
@@ -67,7 +75,7 @@ func New(fd int, closeFdOnClose bool, fdEpollEvents uint32, readFd func(fd int) 
 	}
 
 	events = &FdEvents{
-		events:              make(chan time.Time, 1), // Buffer 1 to store the latest.
+		events:              make(chan *Event, 1), // Buffer 1 to store the latest.
 		exitWaitLoopEventFd: wakeUpEventFd,
 	}
 	runtime.SetFinalizer(events, func(p *FdEvents) { p.Close() })
@@ -77,7 +85,7 @@ func New(fd int, closeFdOnClose bool, fdEpollEvents uint32, readFd func(fd int) 
 	return
 }
 
-func (events *FdEvents) waitLoop(fd int, closeFdOnClose bool, epollFd int, readFd func(fd int) time.Time) {
+func (events *FdEvents) waitLoop(fd int, closeFdOnClose bool, epollFd int, readFd ReadFdFunc) {
 	defer func() {
 		err := unix.Close(events.exitWaitLoopEventFd)
 		if err != nil {
@@ -112,6 +120,9 @@ epoll_wait_loop:
 			case int32(fd):
 				// Interrupt caused by GPIO event.
 				t := readFd(fd)
+				if t == nil {
+					continue
+				}
 				// Discard the unread old value.
 				select {
 				case <-events.events:
@@ -160,6 +171,6 @@ func (events *FdEvents) Close() (err error) {
 //
 // Package fdevents will not block sending to the channel: it only keeps the lastest
 // value in the channel.
-func (events *FdEvents) Events() <-chan time.Time {
+func (events *FdEvents) Events() <-chan *Event {
 	return events.events
 }

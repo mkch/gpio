@@ -30,11 +30,11 @@ func main() {
 
 	for {
 		select {
-		case _, ok := <-btn.Events():
+		case event, ok := <-btn.Events():
 			if !ok {
 				return
 			}
-			if mustValue(btn.Value()) == 1 {
+			if event.RisingEdge {
 				must(led.SetValue(0))
 			} else {
 				must(led.SetValue(1))

@@ -36,19 +36,19 @@ func (l *LineWithEvent) Value() (value byte, err error) {
 	return l.l.Value()
 }
 
-func readGPIOLineEventFd(fd int) time.Time {
+func readGPIOLineEventFd(fd int) *fdevents.Event {
 	var eventData sys.GPIOEventData
 	_, err := io.ReadFull(sys.FdReader(fd), (*[unsafe.Sizeof(eventData)]byte)(unsafe.Pointer(&eventData))[:])
 	if err != nil {
 		if err == syscall.EINTR {
-			return time.Now() // Hack here.
+			return nil // ignore
 		}
 		panic(fmt.Errorf("failed to read GPIO event: %w", err))
 	}
 
 	sec := uint64(time.Nanosecond) * eventData.Timestamp / uint64(time.Second)
 	nano := uint64(time.Nanosecond) * eventData.Timestamp % uint64(time.Second)
-	return time.Unix(int64(sec), int64(nano))
+	return &fdevents.Event{RisingEdge: eventData.ID == sys.GPIOEVENT_EVENT_RISING_EDGE, Time: time.Unix(int64(sec), int64(nano))}
 }
 
 func newInputLineWithEvents(chipFd int, offset uint32, flags, eventFlags uint32, consumer string) (line *LineWithEvent, err error) {
@@ -62,7 +62,7 @@ func newInputLineWithEvents(chipFd int, offset uint32, flags, eventFlags uint32,
 		err = fmt.Errorf("request GPIO event failed: ioctl %w", err)
 		return
 	}
-	events, err := fdevents.New(int(req.Fd), false /*NOT close fd*/, unix.EPOLLIN|unix.EPOLLPRI|unix.EPOLLET, readGPIOLineEventFd)
+	events, err := fdevents.New(int(req.Fd), false /*NOT close fd*/, unix.EPOLLIN|unix.EPOLLPRI, readGPIOLineEventFd)
 	if err != nil {
 		unix.Close(int(req.Fd))
 		return
@@ -75,12 +75,14 @@ func newInputLineWithEvents(chipFd int, offset uint32, flags, eventFlags uint32,
 	return
 }
 
+type Event = fdevents.Event
+
 // Events returns a channel from which the occurrence time of GPIO events can be read.
-// The best estimate of time of event occurrence is sent to the returned channel,
+// The GPIO events of this line will be sent to the returned channel,
 // and the channel is closed when l is closed.
 //
 // Package gpio will not block sending to the channel: it only keeps the lastest
 // value in the channel.
-func (l *LineWithEvent) Events() <-chan time.Time {
+func (l *LineWithEvent) Events() <-chan *Event {
 	return l.events.Events()
 }

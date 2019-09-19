@@ -36,11 +36,11 @@ func TestFdEvents(t1 *testing.T) {
 		t.AssertNoError(err)
 	}()
 
-	events, err := fdevents.New(pipe[0], false, unix.EPOLLIN, func(fd int) time.Time {
+	events, err := fdevents.New(pipe[0], false, unix.EPOLLIN, func(fd int) *fdevents.Event {
 		var v int64
 		_, err := io.ReadFull(sys.FdReader(fd), (*[unsafe.Sizeof(v)]byte)(unsafe.Pointer(&v))[:])
 		t.AssertNoError(err)
-		return time.Unix(v, 0)
+		return &fdevents.Event{Time: time.Unix(v, 0)}
 	})
 	t.AssertNoError(err)
 
@@ -55,10 +55,10 @@ for_loop:
 			if !ok {
 				break for_loop
 			}
-			if v.Unix() == 0 {
+			if v.Time.Unix() == 0 {
 				t.AssertNoError(events.Close())
 			}
-			received = append(received, v.Unix())
+			received = append(received, v.Time.Unix())
 
 		}
 	}
@@ -84,11 +84,11 @@ func TestFdEventsClose(t1 *testing.T) {
 		t.AssertNoError(err)
 	}()
 
-	events, err := fdevents.New(pipe[0], true /*close fd on close*/, unix.EPOLLIN, func(fd int) time.Time {
+	events, err := fdevents.New(pipe[0], true /*close fd on close*/, unix.EPOLLIN, func(fd int) *fdevents.Event {
 		var v int64
 		_, err := io.ReadFull(sys.FdReader(fd), (*[unsafe.Sizeof(v)]byte)(unsafe.Pointer(&v))[:])
 		t.AssertNoError(err)
-		return time.Unix(v, 0)
+		return &fdevents.Event{Time: time.Unix(v, 0)}
 	})
 	t.AssertNoError(err)
 
