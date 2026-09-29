@@ -42,7 +42,7 @@ type Chip struct {
 // OpenChip opens a certain GPIO chip device.
 func OpenChip(device string) (chip *Chip, err error) {
 	devPath := filepath.Join("/dev", device)
-	fd, err := unix.Open(devPath, unix.O_RDONLY, 0)
+	fd, err := unix.Open(devPath, unix.O_RDONLY|unix.O_CLOEXEC, 0)
 	if err != nil {
 		err = fmt.Errorf("open chip %v failed: %w", devPath, err)
 		return

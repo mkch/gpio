@@ -314,7 +314,7 @@ func OpenPinWithEvents(n int) (pin *PinWithEvent, err error) {
 		return
 	}
 
-	fd, err := unix.Open(p.value.Path, unix.O_RDONLY, 0)
+	fd, err := unix.Open(p.value.Path, unix.O_RDONLY|unix.O_CLOEXEC, 0)
 	if err != nil {
 		err = fmt.Errorf("failed to open value file of pin %#v when preparing interrupt: %w", p.n, err)
 		return
